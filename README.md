@@ -55,8 +55,15 @@ Get-One -eq 2  # => 1 - Bug!
 # To prevent such bugs from occuring in your code base, you could
 # use custom pipe comparison operators such as the following
 
-function === { iif ($input[0] -eq $args[0]) $true $false }
-function ==! { iif ($input[0] -ne $args[0]) $true $false }
+function === ($value)
+{
+    foreach ($v in $input) { $v -eq $value; break }
+}
+
+function ==! ($value)
+{
+    foreach ($v in $input) { $v -ne $value; break }
+}
 
 Get-One | === 1  # => True
 Get-One | === 2  # => False
@@ -90,14 +97,22 @@ function .. ($notation)
     $notation.split('.') | % {
         $split = $_.split('[]')
         # get array item
-        if ($_.startsWith('[') -and $_.endsWith(']')) { $obj = $obj.item($split[1]) }
+        if ($_.startsWith('[') -and $_.endsWith(']')) {
+            $obj = $obj.item($split[1])
+        }
         # get object property, then array item
-        if ($_ -match '.+\[[0-9]+\]') { $prop = $split[0]; $obj = $obj.$prop[$split[1]] }
+        if ($_ -match '.+\[[0-9]+\]') {
+            $prop = $split[0]
+            $obj = $obj.$prop[$split[1]]
+        }
         # get object property
-        if (!$_.contains('[') -and !$_.contains(']')) { $obj = $obj.$_ }
+        if (!$_.contains('[') -and !$_.contains(']')) {
+            $obj = $obj.$_
+        }
     }
     $obj
 }
+
 
 # Now you can use dot notation with pipes to simplify the control
 # flow of your code as follows

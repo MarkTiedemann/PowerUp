@@ -8,14 +8,14 @@ function iif ($condition, $ifTrue, $ifFalse)
     }
 }
 
-function ===
+function === ($value)
 {
-    iif ($input[0] -eq $args[0]) $true $false
+    foreach ($v in $input) { $v -eq $value; break }
 }
 
-function ==!
+function ==! ($value)
 {
-    iif ($input[0] -ne $args[0]) $true $false
+    foreach ($v in $input) { $v -ne $value; break }
 }
 
 function .. ($notation)
