@@ -9,6 +9,18 @@
 Curl 'https://raw.githubusercontent.com/MarkTiedemann/PowerUp/master/PowerUp.ps1' -OutFile "$pwd\PowerUp.ps1"
 ```
 
+## Introduction
+
+**PowerUp helps you safely write PowerShell scripts with less clutter and a better control flow:**
+
+```powershell
+if ((Get-NetAdapter Wifi).Status -eq 'Up') { 'Yay!' } else { 'God-dammit.' }  # => Yay!
+```
+**vs.**
+```powershell
+iif (Get-NetAdapter WiFi | .. Status | === Up) Yay! God-dammit. # => Yay!
+```
+
 ## Features
 
 ### 1 - Inline if function
