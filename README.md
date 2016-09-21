@@ -14,11 +14,11 @@ Curl 'https://raw.githubusercontent.com/MarkTiedemann/PowerUp/master/PowerUp.ps1
 **PowerUp helps you safely write PowerShell scripts with less clutter and a better control flow:**
 
 ```powershell
-if ((Get-NetAdapter Wifi).Status -eq 'Up') { 'Yay!' } else { 'God-dammit.' }  # => Yay!
+if ((Get-NetAdapter WiFi).Status -eq 'Up') { 'Yay!' } else { 'God-dammit.' }  # => Yay!
 ```
 **vs.**
 ```powershell
-iif (Get-NetAdapter WiFi | .. Status | === Up) Yay! God-dammit. # => Yay!
+iif (Get-NetAdapter WiFi | .. Status | === Up) Yay! God-dammit.  # => Yay!
 ```
 
 ## Features
@@ -90,9 +90,11 @@ Get-One | ==! 2  # => True
 ```powershell
 
 # PowerShell does not come with a built-in way to access deeply
-# nested object properties and array items with pipes. Instead,
-# you have to enclose the entire previous pipe in brackets before
-# you can use dot notation to access those items and properties.
+# nested object properties and array items with pipes.
+
+# Instead, you have to enclose the entire previous pipe in brackets
+# before you can use dot notation to access those items and properties
+
 # This makes the code both harder to write (since you have to go
 # back to the beginning of the pipe) and harder to read (since
 # whoever reads the code, will have to go back, too)
