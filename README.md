@@ -1,7 +1,7 @@
 
 # PowerUp
 
-**PowerShell language utilities.**
+**3-character PowerShell language utilities.**
 
 ## Installation
 
@@ -14,38 +14,76 @@ Curl 'https://raw.githubusercontent.com/MarkTiedemann/PowerUp/master/PowerUp.ps1
 **PowerUp helps you safely write PowerShell scripts with less clutter and a better control flow:**
 
 ```powershell
-if ((Get-NetAdapter WiFi).Status -eq 'Up') { 'Yay!' } else { 'God-dammit.' }  # => Yay!
+if ((Get-NetAdapter WiFi).Status -eq 'Up') { 'w00t' } else { '$#!+' }  # => w00t
 ```
 **vs.**
 ```powershell
-iif (Get-NetAdapter WiFi | .. Status | === Up) Yay! God-dammit.  # => Yay!
+if? (Get-NetAdapter WiFi | ... Status | === Up) 'w00t' : '$#!+'  # => w00t
 ```
 
 ## Features
 
-### 1 - Inline if function
+### `if?` - Inline if function
 
 ```powershell
 
 # PowerShell doesn't have an inline if function
 # or a ternary operator, so let's fix that
 
-function iif ($condition, $ifTrue, $ifFalse)
+function if? ($condition, $ifTrue, $colon, $ifFalse)
 {
-    if ($condition) {
-        if ($ifTrue -is 'ScriptBlock') { &$ifTrue } else { $ifTrue }
-    } else {
-        if ($ifFalse -is 'ScriptBlock') { &$ifFalse } else { $ifFalse }
+    if ($condition) 
+    {
+        if ($ifTrue -is [ScriptBlock]) { &$ifTrue } else { $ifTrue }
+    } 
+    else 
+    {
+        if ($ifFalse -is [ScriptBlock]) { &$ifFalse } else { $ifFalse }
     }
 }
 
 ```
 
-### 2 - Safer comparison operators
+### `~~>` - Pipe peek
 
 ```powershell
 
-# The built-in PowerShell comparison operators don't handle function
+# To get the first element from the pipe, i.e. to peek into the pipe, 
+# in PowerShell you should never directly access the input object, but 
+# iterate over it
+
+# That is because, as the following functions show, the input object is
+# always an ArrayListEnumeratorSimple (even if the input was an Int32)
+
+function Poop-Type { $input.getType().name } 
+1 | Poop-Type  # => ArrayListEnumeratorSimple
+
+function Plop-Type { $input[0].getType().name }  
+1 | Plop-Type  # => ArrayListEnumeratorSimple
+
+# There are multiple solutions for fixing this, e.g.
+
+# 1 - Using the iterators .moveNext() method in combination with its
+# .current property
+function Meek-Type { $input.moveNext() > $null; $input.current.getType().name }
+1 | Meek-Type  # => Int32
+
+# 2 - Using the built-in foreach loop and breaking after the first item
+function Zeek-Type { foreach ($i in $input) { $i.getType().name; break } }
+1 | Zeek-Type  # => Int32
+
+# 3 - Using a proxy function (which automatically casts the iterator)
+function ~~> ($in) { $in[0] }
+function Peek-Type { (~~> $input).getType().name }
+1 | Peek-Type  # => Int32
+
+```
+
+### `===` & `==!` - Pipe equality operators
+
+```powershell
+
+# The built-in PowerShell equality operators don't handle function
 # calls implicitly which may lead to bugs that are hard to track down
 
 function Get-One { 1 }
@@ -65,16 +103,16 @@ Get-One -eq 2  # => 1 - Bug!
 (Get-One) -eq 2  # => False
 
 # To prevent such bugs from occuring in your code base, you could
-# use custom pipe comparison operators such as the following
+# use custom pipe equality operators such as the following
 
 function === ($value)
 {
-    foreach ($v in $input) { $v -eq $value; break }
+    (~~> $input[0]) -eq $value
 }
 
 function ==! ($value)
 {
-    foreach ($v in $input) { $v -ne $value; break }
+    (~~> $input) -ne $value
 }
 
 Get-One | === 1  # => True
@@ -85,12 +123,12 @@ Get-One | ==! 2  # => True
 
 ```
 
-### 3- Better dot notation
+### `...` - Pipe dot notation
 
 ```powershell
 
 # PowerShell does not come with a built-in way to access deeply
-# nested object properties and array items with pipes.
+# nested Object properties and Array items with pipes
 
 # Instead, you have to enclose the entire previous pipe in brackets
 # before you can use dot notation to access those items and properties
@@ -105,21 +143,28 @@ $url = 'https://api.github.com/repos/PowerShell/PowerShell/releases'
 
 # So let's fix this with the following function
 
-function .. ($notation)
+function ... ($notation)
 {
-    $obj = $input[0]
+    $obj = ~~> $input
     $notation.split('.') | % {
         $split = $_.split('[]')
-        # get array item
+        # get Array item
         if ($_.startsWith('[') -and $_.endsWith(']')) {
-            $obj = $obj.item($split[1])
+            # handle default Array
+            if ($obj -is [Array]) {
+                $obj = $obj[$split[1]]
+            } 
+            # handle System.Array
+            if ($obj -is [System.Array]) {
+                $obj = $obj.item($split[1])
+            } 
         }
-        # get object property, then array item
+        # get Object property, then Array item
         if ($_ -match '.+\[[0-9]+\]') {
             $prop = $split[0]
             $obj = $obj.$prop[$split[1]]
         }
-        # get object property
+        # get Object property
         if (!$_.contains('[') -and !$_.contains(']')) {
             $obj = $obj.$_
         }
@@ -127,13 +172,17 @@ function .. ($notation)
     $obj
 }
 
-
 # Now you can use dot notation with pipes to simplify the control
 # flow of your code as follows
 
-Invoke-WebRequest $url | ConvertFrom-Json | .. [0].tag_name  # => v6.0.0-alpha.10
+Invoke-WebRequest $url | ConvertFrom-Json | ... [0].tag_name  # => v6.0.0-alpha.10
 
 ```
+
+## Development
+
+- **Testing**: Run `Test.ps1`
+- **Todo**: [Write the manual](https://technet.microsoft.com/en-us/magazine/ff458353.aspx)
 
 ## License
 

@@ -1,38 +1,53 @@
 
-function iif ($condition, $ifTrue, $ifFalse)
+function if? ($condition, $ifTrue, $colon, $ifFalse)
 {
-    if ($condition) {
-        if ($ifTrue -is 'ScriptBlock') { &$ifTrue } else { $ifTrue }
-    } else {
-        if ($ifFalse -is 'ScriptBlock') { &$ifFalse } else { $ifFalse }
+    if ($condition) 
+    {
+        if ($ifTrue -is [ScriptBlock]) { &$ifTrue } else { $ifTrue }
+    } 
+    else 
+    {
+        if ($ifFalse -is [ScriptBlock]) { &$ifFalse } else { $ifFalse }
     }
+}
+
+function ~~> ($in) 
+{
+    $in[0]
 }
 
 function === ($value)
 {
-    foreach ($v in $input) { $v -eq $value; break }
+    (~~> $input[0]) -eq $value
 }
 
 function ==! ($value)
 {
-    foreach ($v in $input) { $v -ne $value; break }
+    (~~> $input) -ne $value
 }
 
-function .. ($notation)
+function ... ($notation)
 {
-    $obj = $input[0]
+    $obj = ~~> $input
     $notation.split('.') | % {
         $split = $_.split('[]')
-        # get array item
+        # get Array item
         if ($_.startsWith('[') -and $_.endsWith(']')) {
-            $obj = $obj.item($split[1])
+            # handle default Array
+            if ($obj -is [Array]) {
+                $obj = $obj[$split[1]]
+            } 
+            # handle System.Array
+            if ($obj -is [System.Array]) {
+                $obj = $obj.item($split[1])
+            } 
         }
-        # get object property, then array item
+        # get Object property, then Array item
         if ($_ -match '.+\[[0-9]+\]') {
             $prop = $split[0]
             $obj = $obj.$prop[$split[1]]
         }
-        # get object property
+        # get Object property
         if (!$_.contains('[') -and !$_.contains(']')) {
             $obj = $obj.$_
         }
