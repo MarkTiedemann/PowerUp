@@ -1,7 +1,7 @@
 
 . .\PowerUp.ps1
 
-function Test ($desc, $actual, $expected) 
+function Test ($desc, $actual, $expected)
 {
     Write-Host ($desc + ': ') -NoNewline
     $a = &$actual
@@ -37,12 +37,12 @@ Test 'if? ($false) { 1 } : { 0 } returns 0' { if? ($false) { 1 } : { 0 } } 0
 Test '~~> 1' { ~~> 1 } 1
 Test '~~> 1, 2' { ~~> 1, 2 } 1
 
-function Peek-Type { (~~> $input).getType().name }
-function Meek-Type { $input.moveNext() > $null; $input.current.getType().name }
-function Zeek-Type { foreach ($i in $input) { $i.getType().name; break } }
+function Peek-Type { (~~> $input).GetType().Name }
+function Meek-Type { $input.moveNext() > $null; $input.current.GetType().Name }
+function Zeek-Type { foreach ($i in $input) { $i.GetType().Name; break } }
 
-function Poop-Type { $input.getType().name }
-function Plop-Type { $input[0].getType().name }
+function Poop-Type { $input.GetType().Name }
+function Plop-Type { $input[0].GetType().Name }
 
 Test '0 | Peek-Type returns Int32' { 0 | Peek-Type } Int32
 Test '0 | Meek-Type returns Int32' { 0 | Meek-Type } Int32
@@ -75,6 +75,9 @@ Test 'Zero | ==! 0 returns false' { Zero | ==! 0 } $false
 Test 'Zero | ==! 1 returns true' { Zero | ==! 1 } $true
 Test 'One | ==! 0 returns true' { One | ==! 0 } $true
 Test 'One | ==! 1 returns false' { One | ==! 1 } $false
+
+Test "Test 1 | === '1' returns false" { 1 | === '1' } $false
+Test "Test 1 | ==! '1' returns true" { 1 | ==! '1' } $true
 
 # Test ...
 
